@@ -1,10 +1,10 @@
 import com.mysql.cj.jdbc.MysqlDataSource;
 import org.junit.Test;
-import table.TableInfoCollection;
-import table.factory.jdbc.JdbcTableInfosFactory;
-import table.factory.jdbc.TableNameFilter;
-import table.validation.ValidationResult;
-import table.validation.error.ValidationError;
+import pers.tom.table.TableInfoCollection;
+import pers.tom.table.factory.jdbc.JdbcTableInfosFactory;
+import pers.tom.table.factory.jdbc.TableNameFilter;
+import pers.tom.table.validation.ValidationResult;
+import pers.tom.table.validation.error.ValidationError;
 
 
 /**
