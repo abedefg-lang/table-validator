@@ -4,13 +4,9 @@ import lombok.Data;
 import lombok.experimental.Accessors;
 import pers.tom.table.ColumnInfo;
 import pers.tom.table.TableInfo;
-import pers.tom.table.converter.DbTypeConverter;
-import pers.tom.table.converter.JavaTypeConverter;
 import pers.tom.table.factory.TableInfoFilter;
 import pers.tom.table.factory.TableInfosFactory;
 import pers.tom.table.factory.jdbc.dialect.Dialect;
-import pers.tom.table.factory.jdbc.dialect.Dialects;
-
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -34,31 +30,16 @@ public class JdbcTableInfosFactory implements TableInfosFactory {
     private final DataSource dataSource;
 
     /**数据库方言*/
-    private final Dialect dialect;
-
-    /**类型转换器*/
-    private JavaTypeConverter typeConverter;
-
-    /**数据库名称*/
-    private String databaseName;
+    private Dialect dialect;
 
 
     public JdbcTableInfosFactory(DataSource dataSource) {
-        // 默认使用mysql方言
-        this(dataSource, Dialects.MYSQL.getDialect());
-    }
-
-    public JdbcTableInfosFactory(DataSource dataSource, Dialect dialect) {
         this.dataSource = dataSource;
-        this.dialect = dialect;
-        this.typeConverter = new DbTypeConverter();
     }
-
 
     @Override
     public List<TableInfo> get(TableInfoFilter filter) {
-
-        return get(databaseName, filter);
+        return get(null, filter);
     }
 
     /**
@@ -87,17 +68,13 @@ public class JdbcTableInfosFactory implements TableInfosFactory {
         Objects.requireNonNull(dataSource, "datasource不能为null");
         Objects.requireNonNull(dialect, "dialect不能为null");
         Objects.requireNonNull(filter, "filter不能为null");
-        Objects.requireNonNull(databaseName, "databaseName不能为null");
 
         List<TableInfo> filteredTableInfos = new ArrayList<>();
         try {
-            // 获取表信息
+            // 获取所有表 进行过滤
             List<TableInfo> allTableInfos = getAllTableInfos(databaseName);
             for (TableInfo info : allTableInfos) {
-                String tableName = info.getName();
                 if (filter.doFilter(info)) {
-                    // 设置字段信息
-                    info.setColumns(getColumns(databaseName, tableName));
                     filteredTableInfos.add(info);
                 }
             }
@@ -122,12 +99,16 @@ public class JdbcTableInfosFactory implements TableInfosFactory {
              Statement statement = connection.createStatement();
              ResultSet resultSet = statement.executeQuery(sql)) {
             // 创建table info
+            TableInfo table;
             while (resultSet.next()) {
                 // 获取表信息
                 String tableName = resultSet.getString(dialect.getTableNameField());
                 String comment = resultSet.getString(dialect.getTableCommentField());
                 // 添加table info
-                tableInfos.add(new TableInfo(databaseName, tableName).setComment(comment));
+                table = new TableInfo(databaseName, tableName)
+                        .setComment(comment)
+                        .setColumns(getColumns(databaseName, tableName));
+                tableInfos.add(table);
             }
         }
         return tableInfos;
@@ -155,9 +136,9 @@ public class JdbcTableInfosFactory implements TableInfosFactory {
                 boolean isPrimary = dialect.isPrimary(key);
                 String columnType = resultSet.getString(dialect.getColumnTypeField());
                 String comment = resultSet.getString(dialect.getColumnCommentField());
-                Class<?> javaType = typeConverter.convert(columnType);
+                Class<?> javaType = dialect.getJavaType(columnType);
                 // 添加字段
-                columns.add(new ColumnInfo(columnName, columnType, javaType, comment, key, isPrimary));
+                columns.add(new ColumnInfo(columnName, columnType, javaType, comment, isPrimary));
             }
         }
         return columns;

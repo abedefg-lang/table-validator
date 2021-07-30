@@ -1,12 +1,9 @@
 package pers.tom.table;
 
-import cn.hutool.core.collection.CollectionUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-
-import java.util.List;
 
 /**
  * @author lijia
@@ -31,24 +28,8 @@ public class ColumnInfo {
     /**字段备注*/
     private String comment;
 
-    /**字段的键*/
-    private String columnKey;
-
     /**该字段是否是主键*/
     private boolean primary;
-
-    public static ColumnInfo findPrimary(List<ColumnInfo> columnInfos){
-        // 特判
-        if(CollectionUtil.isEmpty(columnInfos)){
-            return null;
-        }
-        for(ColumnInfo info : columnInfos){
-            if(info.isPrimary()){
-                return info;
-            }
-        }
-        return null;
-    }
 
     @Override
     public boolean equals(Object other){

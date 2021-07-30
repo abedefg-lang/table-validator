@@ -1,5 +1,6 @@
 package pers.tom.table;
 
+import cn.hutool.core.collection.CollectionUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -43,7 +44,15 @@ public class TableInfo {
     public TableInfo setColumns(List<ColumnInfo> columns){
         this.columns = columns;
         // 重新设置主键
-        this.primary = ColumnInfo.findPrimary(columns);
+        this.primary = null;
+        if(!CollectionUtil.isEmpty(columns)){
+            for(ColumnInfo column : columns){
+                if(column.isPrimary()){
+                    this.primary = column;
+                    break;
+                }
+            }
+        }
         return this;
     }
 
